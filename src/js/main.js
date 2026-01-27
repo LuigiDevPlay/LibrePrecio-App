@@ -60,25 +60,36 @@ function toggleDarkMode() {
 
 function iniciarProceso() {
   const terminos = document.getElementById("checkTerminos");
+
+  // VALIDACIÓN CON MODAL PERSONALIZADO
   if (!terminos.checked) {
-    alert("⚠️ Debes aceptar los términos para generar el presupuesto.");
-    return;
+    // En lugar del alert, mostramos el modal que añadimos al index.html
+    const modalAviso = document.getElementById("modalTerminos");
+    modalAviso.classList.remove("hidden");
+    return; // Detenemos la ejecución
   }
 
-  const modal = document.getElementById("modalCarga");
+  // SI LOS TÉRMINOS ESTÁN MARCADOS, PROCEDEMOS CON LA CARGA
+  const modalCarga = document.getElementById("modalCarga");
   const barra = document.getElementById("barraCarga");
-  modal.classList.remove("hidden");
+
+  // Reiniciamos la barra por si se usa varias veces
+  barra.style.width = "0%";
+  modalCarga.classList.remove("hidden");
 
   let progreso = 0;
   const t = setInterval(() => {
     progreso += 10;
     barra.style.width = progreso + "%";
+
     if (progreso >= 100) {
       clearInterval(t);
-      modal.classList.add("hidden");
+      modalCarga.classList.add("hidden");
+
+      // Llamamos a la función de cálculos que ya tiene la lógica de inflación
       ejecutarCalculosFinancieros();
     }
-  }, 150);
+  }, 150); // 1.5 segundos de carga total
 }
 
 function ejecutarCalculosFinancieros() {
@@ -93,6 +104,8 @@ function ejecutarCalculosFinancieros() {
   );
   const res = ["resCol1", "resCol2", "resCol3", "resCol4"].map((id) => document.getElementById(id));
 
+  let precioFinalCalculado = 0; // Variable para usar en la alerta de inflación
+
   if (modoActual === "producto") {
     document
       .querySelectorAll(".item-subtotal")
@@ -105,8 +118,8 @@ function ejecutarCalculosFinancieros() {
     labels[3].innerText = "POR AÑO";
 
     const costoUniConInflacion = ((costoBase + luz + agua) / unidades) * (1 + inflacionPct);
-    const precio = costoUniConInflacion * (1 + gananciaPct);
-    const ingresoSemanal = precio * unidades;
+    precioFinalCalculado = costoUniConInflacion * (1 + gananciaPct);
+    const ingresoSemanal = precioFinalCalculado * unidades;
 
     res[0].innerText = `$ ${(ingresoSemanal / 6).toFixed(2)}`;
     res[1].innerText = `$ ${ingresoSemanal.toFixed(2)}`;
@@ -114,8 +127,9 @@ function ejecutarCalculosFinancieros() {
     res[3].innerText = `$ ${(ingresoSemanal * 48).toFixed(2)}`;
 
     document.getElementById("labelPrincipal").innerText = "Precio Sugerido Detal";
-    document.getElementById("resPrincipal").innerText = `$ ${precio.toFixed(2)}`;
-    document.getElementById("resSecundario").innerText = `$ ${(precio * 0.8).toFixed(2)}`;
+    document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+    document.getElementById("resSecundario").innerText =
+      `$ ${(precioFinalCalculado * 0.8).toFixed(2)}`;
     document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Producto";
   } else {
     const pHora = parseFloat(document.getElementById("precioHora").value || 0);
@@ -129,19 +143,59 @@ function ejecutarCalculosFinancieros() {
     labels[3].innerText = "POR AÑO";
 
     const costoTotalServ = (pHora * horas + trans + luz + agua) * (1 + inflacionPct);
-    const precioProyecto = costoTotalServ * (1 + gananciaPct);
+    precioFinalCalculado = costoTotalServ * (1 + gananciaPct);
 
-    res[0].innerText = `$ ${(precioProyecto / 2).toFixed(2)}`;
-    res[1].innerText = `$ ${precioProyecto.toFixed(2)}`;
-    res[2].innerText = `$ ${(precioProyecto * proyectos).toFixed(2)}`;
-    res[3].innerText = `$ ${(precioProyecto * proyectos * 12).toFixed(2)}`;
+    res[0].innerText = `$ ${(precioFinalCalculado / 2).toFixed(2)}`;
+    res[1].innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+    res[2].innerText = `$ ${(precioFinalCalculado * proyectos).toFixed(2)}`;
+    res[3].innerText = `$ ${(precioFinalCalculado * proyectos * 12).toFixed(2)}`;
 
     document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido";
     document.getElementById("labelSecundario").innerText = "Tarifa Valor/Hora";
-    document.getElementById("resPrincipal").innerText = `$ ${precioProyecto.toFixed(2)}`;
+    document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
     document.getElementById("resSecundario").innerText =
-      `$ ${(precioProyecto / (horas || 1)).toFixed(2)}`;
+      `$ ${(precioFinalCalculado / (horas || 1)).toFixed(2)}`;
     document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Servicio";
+  }
+
+  // --- LÓGICA DE ALERTA DE INFLACIÓN MEJORADA ---
+  const alertaDiv = document.getElementById("alertaInflacion");
+  const inflacionReal = (inflacionPct * 100).toFixed(1); // Redondeo a 1 decimal
+
+  if (inflacionReal > 10) {
+    // NIVEL 3: CRÍTICO (Más de 10%)
+    const precioProteccion = precioFinalCalculado * 1.05;
+    alertaDiv.innerHTML = `
+      <div class="flex flex-col gap-2">
+        <span class="text-red-500 dark:text-yellow-400 font-black tracking-widest uppercase text-xs">⚠️ Riesgo Inflacionario Alto</span>
+        <p class="text-sm text-gray-700 dark:text-gray-200">
+          La inflación configurada (${inflacionReal}%) es elevada. Si los costos suben más de lo previsto, 
+          te sugerimos un precio de protección de <strong class="text-black dark:text-white text-lg">$ ${precioProteccion.toFixed(2)}</strong>.
+        </p>
+      </div>
+    `;
+    alertaDiv.classList.remove("hidden");
+  } else if (inflacionReal > 5) {
+    // NIVEL 2: PRECAUCIÓN (Entre 5.1% y 10%)
+    const precioSugeridoSutil = precioFinalCalculado * 1.02; // 2% de colchón
+    alertaDiv.innerHTML = `
+      <div class="flex flex-col gap-2">
+        <span class="text-blue-500 font-black tracking-widest uppercase text-xs">ℹ️ Ajuste por Inflación Moderada</span>
+        <p class="text-sm text-gray-700 dark:text-gray-200">
+          Con una inflación del ${inflacionReal}%, podrías considerar redondear el precio a 
+          <strong class="text-black dark:text-white text-lg">$ ${precioSugeridoSutil.toFixed(2)}</strong> 
+          para absorber pequeños aumentos en los insumos sin afectar tu ganancia.
+        </p>
+      </div>
+    `;
+    alertaDiv.classList.remove("hidden");
+  } else {
+    // NIVEL 1: ESTABLE (5% o menos)
+    alertaDiv.innerHTML = `
+      <p class="text-xs opacity-70 italic text-gray-600 dark:text-gray-400">
+        ✅ Análisis basado en una economía estable (${inflacionReal}% de inflación). Los márgenes de ganancia están bien protegidos.
+      </p>
+    `;
   }
 
   document.getElementById("pdfNombreNegocio").innerText =

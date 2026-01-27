@@ -258,6 +258,23 @@
         >
           Calcular Informe
         </button>
+        <div
+          class="no-print mt-6 p-4 bg-orange-50 dark:bg-orange-900/10 rounded-2xl border border-orange-100 dark:border-orange-800/30 text-center transition-all hover:shadow-sm"
+        >
+          <p
+            class="text-[11px] text-orange-800 dark:text-orange-300 font-black uppercase tracking-widest flex items-center justify-center gap-2"
+          >
+            ☕ ¿Te ayudó la herramienta?
+          </p>
+          <p class="text-[10px] text-orange-600 dark:text-orange-400/80 mt-1 italic">
+            Tu apoyo me ayuda a mantener este proyecto libre de suscripciones.
+          </p>
+          <div
+            class="mt-2 font-black text-xs text-orange-700 dark:text-orange-200 bg-white dark:bg-orange-800/40 py-2 px-4 rounded-lg inline-block border border-orange-200 dark:border-orange-700"
+          >
+            PayPal: <span class="select-all">lm3771843@gmail.com</span>
+          </div>
+        </div>
       </section>
 
       <div id="resultado" class="hidden animate-fade space-y-6">
@@ -342,6 +359,16 @@
         >
           🖨️ GENERAR PDF PROFESIONAL
         </button>
+        <div class="no-print bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-center mt-6">
+          <p class="text-xs text-yellow-800 font-medium">
+            🌟 <strong>Apoya este proyecto:</strong> Si esta calculadora te ayudó a cobrar mejor,
+            considera una donación para seguir mejorándola.
+          </p>
+          <div class="mt-2 text-[10px] font-black text-yellow-600 space-y-1">
+            <p class="break-all">USDT (Binance Pay/Network): TQ4v1n1WU8iHRnCAMEkTsRea8DK9j949mm</p>
+            <p>PayPal: lm3771843@gmail.com</p>
+          </div>
+        </div>
       </div>
 
       <footer
@@ -353,9 +380,9 @@
         <div
           class="flex justify-center gap-6 text-[10px] font-bold text-blue-500 uppercase tracking-widest"
         >
-          <a href="#" class="hover:underline">Privacidad</a>
-          <a href="#" class="hover:underline">Términos de Uso</a>
-          <a href="#" class="hover:underline">Contacto</a>
+          <a href="privacidad.html" class="hover:underline">Privacidad</a>
+          <a href="terminos.html" class="hover:underline">Términos de Uso</a>
+          <a href="contacto.html" class="hover:underline">Contacto</a>
         </div>
       </footer>
 
@@ -366,12 +393,6 @@
         <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl max-w-sm w-full text-center">
           <div class="text-4xl mb-4">🛡️</div>
           <h3 class="text-xl font-black mb-2 dark:text-white">Verificando Datos...</h3>
-          <!-- <p class="text-gray-500 text-xs mb-6 uppercase tracking-widest">Cargando Publicidad</p>
-          <div
-            class="bg-yellow-50 dark:bg-yellow-900/20 h-32 rounded-2xl mb-6 flex items-center justify-center border-2 border-dashed border-yellow-200 dark:border-yellow-800"
-          >
-            <span class="text-[8px] font-black text-yellow-600">ADSENSE AD SPACE</span>
-          </div> -->
           <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
             <div
               id="barraCarga"
@@ -380,6 +401,34 @@
             ></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div
+      id="modalTerminos"
+      class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-fade"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-8 text-center shadow-2xl border border-red-100 dark:border-red-900/30"
+      >
+        <div
+          class="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"
+        >
+          ⚠️
+        </div>
+        <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+          Acceso Denegado
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-3 leading-relaxed">
+          Para garantizar la seguridad legal y financiera, es obligatorio aceptar los
+          <b>Términos de Uso y Políticas</b> antes de generar el informe.
+        </p>
+        <button
+          onclick="document.getElementById('modalTerminos').classList.add('hidden')"
+          class="mt-8 w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white font-bold py-4 rounded-2xl hover:scale-105 transition-transform"
+        >
+          Entendido, lo haré
+        </button>
       </div>
     </div>
 
