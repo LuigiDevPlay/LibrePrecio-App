@@ -29,35 +29,41 @@ function agregarFila() {
   div.className =
     "grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border dark:border-gray-700 animate-fade mt-3 shadow-sm";
   div.innerHTML = `
-    <input type="text" placeholder="Insumo" class="col-span-10 md:col-span-4 p-2 bg-transparent outline-none text-xs md:text-sm font-medium dark:text-white">
-    <button onclick="this.parentElement.remove()" class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg md:order-last">×</button>
+    <div class="col-span-10 md:col-span-4">
+       <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1">Insumo / Concepto</label>
+       <input type="text" placeholder="Ej. Harina de Trigo" class="w-full p-2 bg-transparent outline-none text-xs md:text-sm font-medium dark:text-white">
+    </div>
+    
+    <button onclick="this.parentElement.remove()" class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg md:order-last self-end pb-1">×</button>
     
     <div class="col-span-4 md:col-span-2">
-      <label class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1">Cant.</label>
+      <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1">
+        <span class="md:hidden">Cant.</span><span class="hidden md:inline">Cantidad</span>
+      </label>
       <input type="number" placeholder="0" oninput="actualizarSubtotal(this)" class="w-full p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg text-center item-cant text-xs md:text-sm dark:text-white">
     </div>
 
     <div class="col-span-4 md:col-span-2">
-      <label class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1">Precio</label>
+      <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1">
+        <span class="md:hidden">Precio</span><span class="hidden md:inline">Precio Product.</span>
+      </label>
       <input type="number" placeholder="0.00" oninput="actualizarSubtotal(this)" class="w-full p-2 bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-lg text-center item-precio text-xs md:text-sm dark:text-white">
     </div>
 
     <div class="col-span-4 md:col-span-3">
-      <label class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1 text-right">Total</label>
+      <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1 text-right">
+        <span class="md:hidden">Total</span><span class="hidden md:inline">Total SubFila</span>
+      </label>
       <input type="text" value="0.00" class="w-full p-2 text-right font-black item-subtotal text-blue-600 dark:text-blue-400 text-xs md:text-sm bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg" readonly>
     </div>
   `;
   document.getElementById("listaInsumos").appendChild(div);
 }
-function actualizarSubtotal(el) {
-  // Buscamos el contenedor principal de la fila (el que tiene la clase grid)
-  const fila = el.closest(".grid");
 
-  // Obtenemos la cantidad y el precio buscando por sus clases dentro de esa fila
+function actualizarSubtotal(el) {
+  const fila = el.closest(".grid");
   const cant = parseFloat(fila.querySelector(".item-cant").value || 0);
   const precio = parseFloat(fila.querySelector(".item-precio").value || 0);
-
-  // Calculamos y actualizamos el campo de subtotal
   const subtotal = cant * precio;
   fila.querySelector(".item-subtotal").value = subtotal.toFixed(2);
 }
@@ -149,25 +155,31 @@ function ejecutarCalculosFinancieros() {
       `$ ${(precioFinalCalculado * 0.8).toFixed(2)}`;
     document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Producto";
   } else {
+    // ... (tus variables de pHora, horas, proyectos, trans, etc. se mantienen igual arriba)
     const pHora = parseFloat(document.getElementById("precioHora").value || 0);
     const horas = parseFloat(document.getElementById("horasProyecto").value || 0);
     const proyectos = parseFloat(document.getElementById("proyectosMes").value || 1);
     const trans = parseFloat(document.getElementById("gastoTransporte").value || 0);
 
-    labels[0].innerText = "POR ENTREGA";
-    labels[1].innerText = "POR PROYECTO";
+    // --- CAMBIO DE ETIQUETAS SOLICITADO ---
+    labels[0].innerText = "POR DÍA";
+    labels[1].innerText = "POR ENTREGA"; // Cambiado de POR PROYECTO a POR ENTREGA
     labels[2].innerText = "POR MES";
     labels[3].innerText = "POR AÑO";
 
     const costoTotalServ = (pHora * horas + trans + luz + agua) * (1 + inflacionPct);
     precioFinalCalculado = costoTotalServ * (1 + gananciaPct);
 
-    res[0].innerText = `$ ${(precioFinalCalculado / 2).toFixed(2)}`;
-    res[1].innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
-    res[2].innerText = `$ ${(precioFinalCalculado * proyectos).toFixed(2)}`;
-    res[3].innerText = `$ ${(precioFinalCalculado * proyectos * 12).toFixed(2)}`;
+    const ingresoMensual = precioFinalCalculado * proyectos;
 
-    document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido";
+    // Resultados del Análisis Proyectado
+    res[0].innerText = `$ ${(ingresoMensual / 22).toFixed(2)}`; // Ingreso diario estimado (22 días lab)
+    res[1].innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+    res[2].innerText = `$ ${ingresoMensual.toFixed(2)}`;
+    res[3].innerText = `$ ${(ingresoMensual * 12).toFixed(2)}`;
+
+    // --- CAMBIO DE TÍTULO PRINCIPAL ---
+    document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido Por Proyecto"; // Nombre largo solicitado
     document.getElementById("labelSecundario").innerText = "Tarifa Valor/Hora";
     document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
     document.getElementById("resSecundario").innerText =

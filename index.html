@@ -116,22 +116,31 @@
           <div
             class="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border dark:border-gray-700 shadow-sm"
           >
-            <input
-              type="text"
-              placeholder="Insumo (ej. Harina)"
-              class="col-span-10 md:col-span-4 p-2 bg-transparent outline-none text-xs md:text-sm font-medium dark:text-white"
-            />
+            <div class="col-span-10 md:col-span-4">
+              <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1"
+                >Insumo / Concepto</label
+              >
+              <input
+                type="text"
+                placeholder="Insumo (ej. Harina)"
+                class="w-full p-2 bg-transparent outline-none text-xs md:text-sm font-medium dark:text-white"
+              />
+            </div>
+
             <button
               onclick="this.parentElement.remove()"
-              class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:order-last"
+              class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:order-last self-end pb-1"
             >
               ×
             </button>
 
             <div class="col-span-4 md:col-span-2">
-              <label class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1"
-                >Cant.</label
+              <label
+                class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1 text-center md:text-left"
               >
+                <span class="md:hidden">Cant.</span>
+                <span class="hidden md:inline">Cantidad</span>
+              </label>
               <input
                 type="number"
                 placeholder="0"
@@ -141,9 +150,12 @@
             </div>
 
             <div class="col-span-4 md:col-span-2">
-              <label class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1"
-                >Precio</label
+              <label
+                class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1 text-center md:text-left"
               >
+                <span class="md:hidden">Precio</span>
+                <span class="hidden md:inline">Precio Product.</span>
+              </label>
               <input
                 type="number"
                 placeholder="0.00"
@@ -154,9 +166,11 @@
 
             <div class="col-span-4 md:col-span-3">
               <label
-                class="block md:hidden text-[8px] uppercase text-gray-400 font-bold mb-1 text-right"
-                >Total</label
+                class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1 text-right"
               >
+                <span class="md:hidden">Total</span>
+                <span class="hidden md:inline">Total</span>
+              </label>
               <input
                 type="text"
                 value="0.00"
