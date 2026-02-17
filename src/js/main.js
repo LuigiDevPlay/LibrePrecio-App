@@ -10,17 +10,17 @@ function cambiarModo(modo) {
 
   if (modo === "producto") {
     btnProd.className =
-      "flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base";
+      "flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base cursor-pointer";
     btnServ.className =
-      "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base";
+      "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base cursor-pointer";
     secProd.classList.remove("hidden");
     secServ.classList.add("hidden");
     contTransporte.classList.remove("hidden");
   } else {
     btnServ.className =
-      "flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base";
+      "flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base cursor-pointer";
     btnProd.className =
-      "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base";
+      "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base cursor-pointer";
     secServ.classList.remove("hidden");
     secProd.classList.add("hidden");
 
@@ -38,7 +38,7 @@ function agregarFila() {
        <input type="text" placeholder="Ej. Harina de Trigo" class="w-full p-2 bg-transparent outline-none text-xs md:text-sm font-medium dark:text-white">
     </div>
     
-    <button onclick="this.parentElement.remove()" class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg md:order-last self-end pb-1">×</button>
+    <button onclick="this.parentElement.remove()" class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg md:order-last self-end pb-1 cursor-pointer">×</button>
     
     <div class="col-span-4 md:col-span-2">
       <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1">
@@ -125,7 +125,7 @@ function agregarFilaAdicional() {
   div.innerHTML = `
     <input type="text" placeholder="Ej: Gas o Publicidad" class="col-span-7 p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg text-xs dark:text-white">
     <input type="number" placeholder="0.00" class="col-span-4 p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg text-center text-xs dark:text-white item-extra-valor">
-    <button onclick="this.parentElement.remove()" class="col-span-1 text-red-400 text-xl">×</button>
+    <button onclick="this.parentElement.remove()" class="col-span-1 text-red-400 text-xl cursor-pointer">×</button>
   `;
   document.getElementById("listaAdicionales").appendChild(div);
 }

@@ -139,7 +139,7 @@
         </div>
         <button
           onclick="toggleDarkMode()"
-          class="p-3 bg-white dark:bg-gray-800 shadow-md rounded-full"
+          class="p-3 bg-white dark:bg-gray-800 shadow-md rounded-full cursor-pointer"
         >
           <span id="themeIcon">🌙</span>
         </button>
@@ -149,14 +149,14 @@
         <button
           onclick="cambiarModo('producto')"
           id="btnModoProducto"
-          class="flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base"
+          class="flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base cursor-pointer"
         >
           📦 Producto
         </button>
         <button
           onclick="cambiarModo('servicio')"
           id="btnModoServicio"
-          class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base"
+          class="flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base cursor-pointer"
         >
           🛠️ Servicio
         </button>
@@ -204,7 +204,7 @@
 
             <button
               onclick="this.parentElement.remove()"
-              class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:order-last self-end pb-1"
+              class="col-span-2 md:col-span-1 text-red-400 text-2xl hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors md:order-last self-end pb-1 cursor-pointer"
             >
               ×
             </button>
@@ -258,7 +258,7 @@
         <div class="flex justify-between items-center">
           <button
             onclick="agregarFila()"
-            class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-6 py-2.5 rounded-xl font-bold"
+            class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-6 py-2.5 rounded-xl font-bold cursor-pointer"
           >
             + Insumo
           </button>
@@ -302,7 +302,7 @@
           <select
             id="modalidadServicio"
             onchange="toggleTransporte()"
-            class="p-3 border rounded-xl dark:bg-gray-700 font-bold"
+            class="p-3 border rounded-xl dark:bg-gray-700 font-bold cursor-pointer"
           >
             <option value="digital">💻 Digital</option>
             <option value="presencial">🚗 Presencial</option>
@@ -395,7 +395,7 @@
               <input
                 type="checkbox"
                 id="checkAdicionales"
-                class="w-5 h-5 accent-blue-600"
+                class="w-5 h-5 accent-blue-600 cursor-pointer"
                 onchange="
                   document
                     .getElementById('contenedorAdicionales')
@@ -410,7 +410,7 @@
             </div>
             <button
               onclick="agregarFilaAdicional()"
-              class="text-blue-500 font-bold text-xs uppercase"
+              class="text-blue-500 font-bold text-xs uppercase cursor-pointer"
             >
               + Añadir Gasto
             </button>
@@ -422,8 +422,12 @@
         </div>
 
         <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl mb-6">
-          <input type="checkbox" id="checkTerminos" class="w-5 h-5 accent-blue-600" />
-          <label for="checkTerminos" class="text-xs text-gray-500 italic"
+          <input
+            type="checkbox"
+            id="checkTerminos"
+            class="w-5 h-5 accent-blue-600 cursor-pointer"
+          />
+          <label for="checkTerminos" class="text-xs text-gray-500 italic cursor-pointer"
             >Acepto los términos y el procesamiento de datos del informe.</label
           >
         </div>
@@ -431,7 +435,7 @@
         <button
           onclick="iniciarProceso()"
           id="btnCalcular"
-          class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase tracking-widest hover:bg-blue-700 transition"
+          class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg uppercase tracking-widest hover:bg-blue-700 transition cursor-pointer"
         >
           Calcular Informe
         </button>
@@ -600,7 +604,7 @@
 
         <button
           onclick="window.print()"
-          class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black no-print transition-all shadow-lg active:scale-95"
+          class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black no-print transition-all shadow-lg active:scale-95 cursor-pointer"
         >
           🖨️ GENERAR PDF PROFESIONAL
         </button>
