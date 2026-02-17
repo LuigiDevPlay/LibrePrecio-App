@@ -6,6 +6,7 @@ function cambiarModo(modo) {
   const btnServ = document.getElementById("btnModoServicio");
   const secProd = document.getElementById("seccionProducto");
   const secServ = document.getElementById("seccionServicio");
+  const contTransporte = document.getElementById("contenedorTransporte");
 
   if (modo === "producto") {
     btnProd.className =
@@ -14,6 +15,7 @@ function cambiarModo(modo) {
       "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base";
     secProd.classList.remove("hidden");
     secServ.classList.add("hidden");
+    contTransporte.classList.remove("hidden");
   } else {
     btnServ.className =
       "flex-1 py-3 rounded-xl font-bold transition-all bg-white dark:bg-blue-600 shadow text-blue-600 dark:text-white text-sm md:text-base";
@@ -21,6 +23,8 @@ function cambiarModo(modo) {
       "flex-1 py-3 rounded-xl font-bold transition-all text-gray-500 dark:text-gray-400 text-sm md:text-base";
     secServ.classList.remove("hidden");
     secProd.classList.add("hidden");
+
+    contTransporte.classList.add("hidden");
   }
 }
 
@@ -54,7 +58,7 @@ function agregarFila() {
       <label class="block text-[8px] md:text-[10px] uppercase text-gray-400 font-bold mb-1 text-right">
         <span class="md:hidden">Total</span><span class="hidden md:inline">Total SubFila</span>
       </label>
-      <input type="text" value="0.00" class="w-full p-2 text-right font-black item-subtotal text-blue-600 dark:text-blue-400 text-xs md:text-sm bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg" readonly>
+      <input type="text" value="0.00" class="w-full p-2 text-right font-black item-subtotal text-blue-600 dark:text-blue-400 text-xs md:text-sm bg-blue-50/50 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-800 rounded-lg" readonly>
     </div>
   `;
   document.getElementById("listaInsumos").appendChild(div);
@@ -115,124 +119,244 @@ function iniciarProceso() {
   }, 150); // 1.5 segundos de carga total
 }
 
+function agregarFilaAdicional() {
+  const div = document.createElement("div");
+  div.className = "grid grid-cols-12 gap-2 items-center animate-fade";
+  div.innerHTML = `
+    <input type="text" placeholder="Ej: Gas o Publicidad" class="col-span-7 p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg text-xs dark:text-white">
+    <input type="number" placeholder="0.00" class="col-span-4 p-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg text-center text-xs dark:text-white item-extra-valor">
+    <button onclick="this.parentElement.remove()" class="col-span-1 text-red-400 text-xl">×</button>
+  `;
+  document.getElementById("listaAdicionales").appendChild(div);
+}
+
 function ejecutarCalculosFinancieros() {
-  let costoBase = 0;
-  const luz = parseFloat(document.getElementById("luz").value || 0);
-  const agua = parseFloat(document.getElementById("agua").value || 0);
+  let costoBaseInsumos = 0;
+  let inversionTotalBruta = 0;
+  let precioFinalCalculado = 0;
+
+  // 1. CAPTURA DE VALORES COMUNES
   const gananciaPct = parseFloat(document.getElementById("ganancia").value || 30) / 100;
   const inflacionPct = parseFloat(document.getElementById("inflacion").value || 5) / 100;
+  const transporte = parseFloat(document.getElementById("transporteGlobal").value || 0);
+  const luz = parseFloat(document.getElementById("luz").value || 0);
+  const agua = parseFloat(document.getElementById("agua").value || 0);
+  const internet = parseFloat(document.getElementById("internet").value || 0);
+  const telefono = parseFloat(document.getElementById("telefono").value || 0);
 
+  let totalAdicionales = 0;
+  const checkAdi = document.getElementById("checkAdicionales");
+  if (checkAdi && checkAdi.checked) {
+    document.querySelectorAll(".item-extra-valor").forEach((input) => {
+      totalAdicionales += parseFloat(input.value || 0);
+    });
+  }
+
+  const res = ["resCol1", "resCol2", "resCol3", "resCol4"].map((id) => document.getElementById(id));
   const labels = ["labelCol1", "labelCol2", "labelCol3", "labelCol4"].map((id) =>
     document.getElementById(id),
   );
-  const res = ["resCol1", "resCol2", "resCol3", "resCol4"].map((id) => document.getElementById(id));
+  const cuerpoTablaPdf = document.getElementById("pdfListaItems");
+  cuerpoTablaPdf.innerHTML = "";
 
-  let precioFinalCalculado = 0; // Variable para usar en la alerta de inflación
-
+  // --- MODO PRODUCTO ---
   if (modoActual === "producto") {
-    document
-      .querySelectorAll(".item-subtotal")
-      .forEach((s) => (costoBase += parseFloat(s.value || 0)));
+    // 1. REINICIAR el contador (Vital para que sume bien al cambiar datos)
+    let costoBaseInsumos = 0;
+    const filasInsumos = document.querySelectorAll("#listaInsumos > div");
+
+    // Limpiamos la tabla del PDF antes de llenarla
+    cuerpoTablaPdf.innerHTML = "";
+
+    filasInsumos.forEach((fila, index) => {
+      const nombre = fila.querySelector('input[type="text"]').value || "Insumo";
+      const cant = parseFloat(fila.querySelector(".item-cant").value || 0);
+      const subtotal = parseFloat(fila.querySelector(".item-subtotal").value || 0);
+
+      // 2. CALCULAR PRECIO UNITARIO (Para que no diga "-")
+      const precioUnitario = cant > 0 ? subtotal / cant : 0;
+
+      costoBaseInsumos += subtotal;
+
+      cuerpoTablaPdf.innerHTML += `
+        <tr class="border-b border-gray-100 dark:border-gray-800">
+          <td class="p-2 text-blue-600 font-black text-[9px] ">${index + 1}</td>
+          <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">${nombre}</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">${cant}</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">$${precioUnitario.toFixed(2)}</td>
+          <td class="p-2 text-right font-black text-[10px] text-blue-900 dark:text-blue-300">$${subtotal.toFixed(2)}</td>
+        </tr>`;
+    });
+
+    // --- AGREGAR GASTOS OPERATIVOS A LA TABLA ---
+    const gastosFijosTotales = luz + agua + internet + telefono + totalAdicionales;
+    if (gastosFijosTotales > 0) {
+      cuerpoTablaPdf.innerHTML += `
+        <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/30">
+          <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">+</td>
+          <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos Operativos y Fijos</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">1</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">Mes</td>
+          <td class="p-2 text-right font-black text-[10px] text-blue-900 dark:text-blue-300">$${gastosFijosTotales.toFixed(2)}</td>
+        </tr>`;
+    }
+
+    // Agregar Transporte (Usando el ID correcto de tu HTML para modo producto)
+    const transporteGlobal = parseFloat(document.getElementById("transporteGlobal").value || 0);
+    if (transporteGlobal > 0) {
+      cuerpoTablaPdf.innerHTML += `
+        <tr class="border-b border-gray-100 dark:border-gray-800">
+          <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">+</td>
+          <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Transporte Global</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">1</td>
+          <td class="p-2 text-center text-[10px] text-gray-500">Viaje</td>
+          <td class="p-2 text-right font-black text-[10px] text-blue-900 dark:text-blue-300">$${transporteGlobal.toFixed(2)}</td>
+        </tr>`;
+    }
+
     const unidades = parseFloat(document.getElementById("unidadesProduccion").value || 1);
 
-    labels[0].innerText = "POR DÍA";
-    labels[1].innerText = "POR SEMANA";
-    labels[2].innerText = "POR MES";
-    labels[3].innerText = "POR AÑO";
+    // 3. INVERSIÓN TOTAL CORRECTA
+    inversionTotalBruta = costoBaseInsumos + gastosFijosTotales + transporteGlobal;
 
-    const costoUniConInflacion = ((costoBase + luz + agua) / unidades) * (1 + inflacionPct);
+    // Actualizar el "Total Inversión" en el pie del PDF
+    document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
+
+    // Cálculos de precio final
+    const costoUniConInflacion = (inversionTotalBruta / unidades) * (1 + inflacionPct);
     precioFinalCalculado = costoUniConInflacion * (1 + gananciaPct);
-    const ingresoSemanal = precioFinalCalculado * unidades;
 
+    // Actualizar Proyecciones en pantalla
+    const ingresoSemanal = precioFinalCalculado * unidades;
     res[0].innerText = `$ ${(ingresoSemanal / 6).toFixed(2)}`;
     res[1].innerText = `$ ${ingresoSemanal.toFixed(2)}`;
     res[2].innerText = `$ ${(ingresoSemanal * 4).toFixed(2)}`;
     res[3].innerText = `$ ${(ingresoSemanal * 48).toFixed(2)}`;
 
-    document.getElementById("labelPrincipal").innerText = "Precio Sugerido Detal";
+    // UI Updates
     document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
-    document.getElementById("resSecundario").innerText =
-      `$ ${(precioFinalCalculado * 0.8).toFixed(2)}`;
-    document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Producto";
-  } else {
-    // ... (tus variables de pHora, horas, proyectos, trans, etc. se mantienen igual arriba)
-    const pHora = parseFloat(document.getElementById("precioHora").value || 0);
-    const horas = parseFloat(document.getElementById("horasProyecto").value || 0);
-    const proyectos = parseFloat(document.getElementById("proyectosMes").value || 1);
-    const trans = parseFloat(document.getElementById("gastoTransporte").value || 0);
+    document.getElementById("pdfCantFinal").innerText = `${unidades} Unds.`;
+    document.getElementById("pdfPrecioTotalFinal").innerText =
+      `$ ${inversionTotalBruta.toFixed(2)}`;
+  }
+  // --- MODO SERVICIO ---
+  else {
+    const precioHora = parseFloat(document.getElementById("precioHora").value || 0);
+    const horasProyecto = parseFloat(document.getElementById("horasProyecto").value || 0);
+    const proyectosMes = parseFloat(document.getElementById("proyectosMes").value || 1);
+    const modalidad = document.getElementById("modalidadServicio").value;
+    const gastoTraslado = parseFloat(document.getElementById("gastoTransporte").value || 0);
 
-    // --- CAMBIO DE ETIQUETAS SOLICITADO ---
-    labels[0].innerText = "POR DÍA";
-    labels[1].innerText = "POR ENTREGA"; // Cambiado de POR PROYECTO a POR ENTREGA
-    labels[2].innerText = "POR MES";
-    labels[3].innerText = "POR AÑO";
+    // 1. CÁLCULO DE LA INVERSIÓN TOTAL DEL SERVICIO (Lo que te cuesta a ti hacerlo)
+    // Inversión = (Valor de tu tiempo) + (Gastos operativos del mes / proyectos) + Traslado
+    const inversionEnTiempo = precioHora * horasProyecto;
+    const gastosOperativosProrrateados = luz + agua + internet + telefono + totalAdicionales;
 
-    const costoTotalServ = (pHora * horas + trans + luz + agua) * (1 + inflacionPct);
-    precioFinalCalculado = costoTotalServ * (1 + gananciaPct);
+    inversionTotalBruta = inversionEnTiempo + gastosOperativosProrrateados + gastoTraslado;
 
-    const ingresoMensual = precioFinalCalculado * proyectos;
+    // 2. CÁLCULO DEL PRECIO FINAL (Inversión + Inflación + Ganancia)
+    const costoConInflacion = inversionTotalBruta * (1 + inflacionPct);
+    precioFinalCalculado = costoConInflacion * (1 + gananciaPct);
 
-    // Resultados del Análisis Proyectado
-    res[0].innerText = `$ ${(ingresoMensual / 22).toFixed(2)}`; // Ingreso diario estimado (22 días lab)
+    // 3. LLENAR TABLA DEL PDF
+    cuerpoTablaPdf.innerHTML = `
+      <tr class="border-b border-gray-100 dark:border-gray-800">
+        <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">1</td>
+        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Mano de Obra (${horasProyecto} hrs x $${precioHora})</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">1</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">$${inversionEnTiempo.toFixed(2)}</td>
+        <td class="p-2 text-right font-black text-[10px] text-blue-900">$${inversionEnTiempo.toFixed(2)}</td>
+      </tr>
+      <tr class="border-b border-gray-100 dark:border-gray-800">
+        <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">2</td>
+        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos Operativos y fijos (Prorrateados)</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">1</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">$${gastosOperativosProrrateados.toFixed(2)}</td>
+        <td class="p-2 text-right font-black text-[10px] text-blue-900">$${gastosOperativosProrrateados.toFixed(2)}</td>
+      </tr>
+      ${
+        modalidad === "presencial"
+          ? `
+      <tr class="border-b border-gray-100 dark:border-gray-800">
+        <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">3</td>
+        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos de Traslado / Movilidad</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">1</td>
+        <td class="p-2 text-center text-[10px] text-gray-500">$${gastoTraslado.toFixed(2)}</td>
+        <td class="p-2 text-right font-black text-[10px] text-blue-900">$${gastoTraslado.toFixed(2)}</td>
+      </tr>`
+          : ""
+      }
+    `;
+
+    // 4. ACTUALIZAR EL TOTAL DE INVERSIÓN EN EL PIE DE LA TABLA DEL PDF
+    document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
+
+    // 5. PROYECCIONES EN PANTALLA
+    const ingresoMensual = precioFinalCalculado * proyectosMes;
+    res[0].innerText = `$ ${(ingresoMensual / 22).toFixed(2)}`;
     res[1].innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
     res[2].innerText = `$ ${ingresoMensual.toFixed(2)}`;
     res[3].innerText = `$ ${(ingresoMensual * 12).toFixed(2)}`;
 
-    // --- CAMBIO DE TÍTULO PRINCIPAL ---
-    document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido Por Proyecto"; // Nombre largo solicitado
-    document.getElementById("labelSecundario").innerText = "Tarifa Valor/Hora";
+    // Etiquetas y UI
+    labels[0].innerText = "POR DÍA";
+    labels[1].innerText = "POR PROYECTO";
+    labels[2].innerText = "POR MES";
+    labels[3].innerText = "POR AÑO";
+
+    document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido";
     document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
     document.getElementById("resSecundario").innerText =
-      `$ ${(precioFinalCalculado / (horas || 1)).toFixed(2)}`;
+      `$ ${(precioFinalCalculado / (horasProyecto || 1)).toFixed(2)} / hr`;
     document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Servicio";
+    document.getElementById("contenedorResumenFinal").classList.add("hidden");
   }
 
-  // --- LÓGICA DE ALERTA DE INFLACIÓN MEJORADA ---
-  const alertaDiv = document.getElementById("alertaInflacion");
-  const inflacionReal = (inflacionPct * 100).toFixed(1); // Redondeo a 1 decimal
-
-  if (inflacionReal > 10) {
-    // NIVEL 3: CRÍTICO (Más de 10%)
-    const precioProteccion = precioFinalCalculado * 1.05;
-    alertaDiv.innerHTML = `
-      <div class="flex flex-col gap-2">
-        <span class="text-red-500 dark:text-yellow-400 font-black tracking-widest uppercase text-xs">⚠️ Riesgo Inflacionario Alto</span>
-        <p class="text-sm text-gray-700 dark:text-gray-200">
-          La inflación configurada (${inflacionReal}%) es elevada. Si los costos suben más de lo previsto, 
-          te sugerimos un precio de protección de <strong class="text-black dark:text-white text-lg">$ ${precioProteccion.toFixed(2)}</strong>.
-        </p>
-      </div>
-    `;
-    alertaDiv.classList.remove("hidden");
-  } else if (inflacionReal > 5) {
-    // NIVEL 2: PRECAUCIÓN (Entre 5.1% y 10%)
-    const precioSugeridoSutil = precioFinalCalculado * 1.02; // 2% de colchón
-    alertaDiv.innerHTML = `
-      <div class="flex flex-col gap-2">
-        <span class="text-blue-500 font-black tracking-widest uppercase text-xs">ℹ️ Ajuste por Inflación Moderada</span>
-        <p class="text-sm text-gray-700 dark:text-gray-200">
-          Con una inflación del ${inflacionReal}%, podrías considerar redondear el precio a 
-          <strong class="text-black dark:text-white text-lg">$ ${precioSugeridoSutil.toFixed(2)}</strong> 
-          para absorber pequeños aumentos en los insumos sin afectar tu ganancia.
-        </p>
-      </div>
-    `;
-    alertaDiv.classList.remove("hidden");
-  } else {
-    // NIVEL 1: ESTABLE (5% o menos)
-    alertaDiv.innerHTML = `
-      <p class="text-xs opacity-70 italic text-gray-600 dark:text-gray-400">
-        ✅ Análisis basado en una economía estable (${inflacionReal}% de inflación). Los márgenes de ganancia están bien protegidos.
-      </p>
-    `;
-  }
-
+  // --- RESULTADOS COMUNES (Fuera de los IF) ---
+  document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+  document.getElementById("resSecundario").innerText =
+    `$ ${(precioFinalCalculado * 0.85).toFixed(2)}`;
+  document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
+  document.getElementById("pdfFecha").innerText = "Emisión: " + new Date().toLocaleDateString();
   document.getElementById("pdfNombreNegocio").innerText =
     document.getElementById("inputNegocio").value || "MI NEGOCIO";
-  document.getElementById("pdfLogo").innerText = (
-    document.getElementById("inputLogo").value || "LP"
-  ).toUpperCase();
-  document.getElementById("pdfFecha").innerText = "Fecha: " + new Date().toLocaleDateString();
+
+  // --- LÓGICA DE ALERTA (WEB) Y NOTA (PDF) ---
+  const alertaDiv = document.getElementById("alertaInflacion");
+  const pdfSugerenciaCont = document.getElementById("pdfSugerenciaContenedor");
+  const pdfSugerenciaTexto = document.getElementById("pdfSugerenciaTexto");
+
+  const valorInflacion = inflacionPct * 100;
+  const precioAjustado = precioFinalCalculado * (1 + inflacionPct);
+
+  let mensajeWeb = "";
+  let textoPDF = "";
+  let claseColor = "";
+
+  if (valorInflacion < 5) {
+    mensajeWeb = `✅ Inflación estable (${valorInflacion.toFixed(1)}%).`;
+    claseColor = "bg-green-50 text-green-700 border-green-100";
+  } else if (valorInflacion <= 10) {
+    mensajeWeb = `⚠️ Inflación moderada. Sugerido: $${precioAjustado.toFixed(2)}`;
+    textoPDF = `Sugerencia: Debido a la inflación (${valorInflacion.toFixed(1)}%), se recomienda un ajuste a $${precioAjustado.toFixed(2)}.`;
+    claseColor = "bg-yellow-50 text-yellow-700 border-yellow-100";
+  } else {
+    mensajeWeb = `🚨 ALERTA CRÍTICA. Sugerido: $${precioAjustado.toFixed(2)}`;
+    textoPDF = `¡ALERTA DE RENTABILIDAD! Con un ${valorInflacion.toFixed(1)}% de inflación, el precio debería ser $${precioAjustado.toFixed(2)}.`;
+    claseColor = "bg-red-50 text-red-700 border-red-100 animate-pulse";
+  }
+
+  // Mostrar alerta en la Web
+  alertaDiv.className = "mt-4 text-center px-4 no-print";
+  alertaDiv.innerHTML = `<div class="p-3 rounded-xl text-xs font-bold border ${claseColor}">${mensajeWeb}</div>`;
+
+  // Manejar Nota en PDF (solo aparece si inflación > 5%)
+  if (valorInflacion >= 5 && pdfSugerenciaCont) {
+    pdfSugerenciaCont.classList.remove("hidden");
+    pdfSugerenciaTexto.innerText = textoPDF;
+  } else if (pdfSugerenciaCont) {
+    pdfSugerenciaCont.classList.add("hidden");
+  }
 
   document.getElementById("resultado").classList.remove("hidden");
   document.getElementById("resultado").scrollIntoView({ behavior: "smooth" });

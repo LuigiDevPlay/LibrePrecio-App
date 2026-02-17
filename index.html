@@ -9,42 +9,103 @@
       crossorigin="anonymous"
     ></script>
     <title>LibrePrecio | Calculadora App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="src/css/styles.css" />
+
     <script>
-      tailwind.config = { darkMode: "class" };
+      // Cambiamos la lógica: Si no hay nada guardado, por defecto NO pone 'dark'
+      if (!localStorage.getItem("theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
     </script>
+
     <style>
+      /* Asegura que los placeholders sean visibles */
+      input::placeholder,
+      textarea::placeholder {
+        color: #94a3b8 !important; /* Un gris Slate-400 claro */
+        opacity: 1 !important;
+      }
+
+      .dark input::placeholder {
+        color: #64748b !important; /* Un gris Slate-500 para el modo oscuro */
+      }
+      /* --- ESTILOS PARA LA VISTA EN PANTALLA (WEB) --- */
+      #contenedorTablaPdf.split {
+        column-count: 1 !important;
+      }
+
+      #contenedorTablaPdf tr {
+        border-left: 4px solid #3b82f6;
+        margin-bottom: 2px;
+      }
+
+      #alertaInflacion span {
+        text-decoration: underline;
+        text-decoration-color: currentColor;
+        text-underline-offset: 2px;
+      }
+
+      /* --- ESTILOS EXCLUSIVOS PARA IMPRESIÓN (PDF) --- */
       @media print {
         .no-print {
           display: none !important;
         }
         body {
           background: white !important;
-          color: black !important;
-          padding: 0;
+          padding: 0 !important;
+          margin: 0 !important;
         }
-        .informe-layout {
-          border: 2px solid #3b82f6 !important;
-          padding: 40px !important;
-          border-radius: 20px !important;
+        @page {
+          size: portrait;
+          margin: 5mm;
         }
-        .card-pdf {
-          border: 1px solid #e5e7eb !important;
-          background: #f9fafb !important;
+
+        #informe {
+          display: block !important;
+          padding: 10px !important;
+          width: 100% !important;
+          border: none !important;
           color: black !important;
+        }
+
+        #contenedorTablaPdf.split {
+          display: block !important;
+          column-count: 2 !important;
+          column-gap: 20px !important;
+          column-rule: 1px solid #e2e8f0;
+        }
+
+        #contenedorTablaPdf.split .tabla-borde {
+          border: none !important;
+        }
+
+        #contenedorTablaPdf table {
+          width: 100% !important;
+          font-size: 8.5px !important;
+        }
+
+        #contenedorTablaPdf tr {
+          break-inside: avoid !important;
+          border-left: 3px solid #3b82f6 !important;
+        }
+
+        #pdfListaItems tr:nth-child(even) {
+          background-color: #f8fafc !important;
+        }
+
+        .split tfoot {
+          display: none !important;
+        }
+
+        .logo_pdf {
+          background: #000;
         }
       }
-      .animate-fade {
-        animation: fadeIn 0.3s ease-in;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+      @media screen {
+        #pdfSugerenciaContenedor {
+          display: none !important;
         }
       }
     </style>
@@ -174,7 +235,7 @@
               <input
                 type="text"
                 value="0.00"
-                class="w-full p-2 text-right font-black item-subtotal text-blue-600 dark:text-blue-400 text-xs md:text-sm bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg"
+                class="w-full p-2 text-right font-black item-subtotal text-blue-600 dark:text-blue-400 text-xs md:text-sm bg-blue-50/50 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-800 rounded-lg"
                 readonly
               />
             </div>
@@ -246,28 +307,55 @@
       <section
         class="no-print bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-6 mb-6 border border-gray-100 dark:border-gray-700"
       >
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
           <div>
-            <label class="text-[10px] uppercase font-black text-gray-400">Luz ($)</label
-            ><input
+            <label class="text-[10px] uppercase font-black text-gray-400">Luz ($)</label>
+            <input
               type="number"
               id="luz"
               value="0"
-              class="w-full p-3 border rounded-xl dark:bg-gray-700"
+              class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:text-white"
             />
           </div>
           <div>
-            <label class="text-[10px] uppercase font-black text-gray-400">Agua ($)</label
-            ><input
+            <label class="text-[10px] uppercase font-black text-gray-400">Agua ($)</label>
+            <input
               type="number"
               id="agua"
               value="0"
-              class="w-full p-3 border rounded-xl dark:bg-gray-700"
+              class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:text-white"
             />
           </div>
           <div>
-            <label class="text-[10px] uppercase font-black text-green-500">% Margen</label
-            ><input
+            <label class="text-[10px] uppercase font-black text-gray-400">Internet ($)</label>
+            <input
+              type="number"
+              id="internet"
+              value="0"
+              class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <div>
+            <label class="text-[10px] uppercase font-black text-gray-400">Teléfono ($)</label>
+            <input
+              type="number"
+              id="telefono"
+              value="0"
+              class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <div id="contenedorTransporte">
+            <label class="text-[10px] uppercase font-black text-gray-400">Transporte ($)</label>
+            <input
+              type="number"
+              id="transporteGlobal"
+              value="0"
+              class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+          <div>
+            <label class="text-[10px] uppercase font-black text-green-500">% Margen</label>
+            <input
               type="number"
               id="ganancia"
               value="30"
@@ -275,13 +363,47 @@
             />
           </div>
           <div>
-            <label class="text-[10px] uppercase font-black text-red-500">% Inflación</label
-            ><input
+            <label class="text-[10px] uppercase font-black text-red-500">% Inflación</label>
+            <input
               type="number"
               id="inflacion"
               value="5"
               class="w-full p-3 border rounded-xl dark:bg-gray-700 text-red-500 font-bold"
             />
+          </div>
+        </div>
+
+        <div
+          class="mb-8 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border dark:border-gray-800"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="checkAdicionales"
+                class="w-5 h-5 accent-blue-600"
+                onchange="
+                  document
+                    .getElementById('contenedorAdicionales')
+                    .classList.toggle('hidden', !this.checked)
+                "
+              />
+              <label
+                for="checkAdicionales"
+                class="font-black text-sm uppercase tracking-tighter dark:text-white"
+                >¿Incluir Gastos Adicionales? (Gas, Publicidad, etc.)</label
+              >
+            </div>
+            <button
+              onclick="agregarFilaAdicional()"
+              class="text-blue-500 font-bold text-xs uppercase"
+            >
+              + Añadir Gasto
+            </button>
+          </div>
+
+          <div id="contenedorAdicionales" class="hidden space-y-3">
+            <div id="listaAdicionales" class="space-y-3"></div>
           </div>
         </div>
 
@@ -319,94 +441,154 @@
       </section>
 
       <div id="resultado" class="hidden animate-fade space-y-6">
-        <div class="informe-layout p-4 bg-white dark:bg-transparent">
-          <div
-            class="hidden sm:flex items-center justify-between border-b-4 border-blue-600 pb-6 mb-8 print:flex"
-          >
-            <div class="flex items-center gap-4">
+        <div
+          id="informe"
+          class="informe-layout p-6 md:p-10 bg-white dark:bg-gray-900 rounded-[30px] border-2 border-blue-100 dark:border-gray-800 shadow-2xl relative overflow-hidden text-black dark:text-white"
+        >
+          <div class="flex justify-between items-center mb-6 border-b-2 border-blue-600 pb-4">
+            <div class="flex items-center gap-3">
               <div
-                id="pdfLogo"
-                class="w-16 h-16 text-gray-800 dark:text-white flex items-center justify-center rounded-xl text-2xl font-black italic"
+                class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-12 shadow-md print:rotate-0"
               >
-                LP
+                <span class="logo_pdf text-white font-black text-xl -rotate-12 print:rotate-0"
+                  >$</span
+                >
               </div>
               <div>
+                <h2 class="text-xl font-black tracking-tighter">
+                  Libre<span class="text-blue-600">Precio</span>
+                </h2>
                 <h1
                   id="pdfNombreNegocio"
-                  class="text-3xl font-black uppercase text-gray-800 dark:text-white"
-                >
-                  MI NEGOCIO
-                </h1>
-                <p
-                  id="subtituloInforme"
-                  class="text-[10px] text-blue-600 font-black tracking-[0.2em] uppercase"
-                >
-                  Informe de Rentabilidad
-                </p>
+                  class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none"
+                ></h1>
               </div>
             </div>
-            <div id="pdfFecha" class="text-xs text-gray-400 font-bold"></div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="p-8 bg-green-500 text-white rounded-3xl text-center card-pdf">
-              <p id="labelPrincipal" class="text-xs uppercase font-bold opacity-80 mb-1">
-                Precio Sugerido Detal
-              </p>
-              <p id="resPrincipal" class="text-4xl font-black">$0.00</p>
-            </div>
-            <div class="p-8 bg-blue-600 text-white rounded-3xl text-center card-pdf">
-              <p id="labelSecundario" class="text-xs uppercase font-bold opacity-80 mb-1">
-                Precio Sugerido Mayor
-              </p>
-              <p id="resSecundario" class="text-4xl font-black">$0.00</p>
+            <div class="text-right">
+              <p id="pdfFecha" class="text-xs font-black text-gray-800 dark:text-white"></p>
+              <p
+                id="subtituloInforme"
+                class="text-[9px] text-blue-600 font-bold uppercase tracking-tighter"
+              ></p>
             </div>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 text-black dark:text-white p-8 rounded-3xl shadow-xl card-pdf"
-          >
-            <h3
-              class="text-yellow-400 font-black uppercase text-sm mb-6 tracking-widest text-center border-b border-gray-700 pb-4"
-            >
-              Análisis Proyectado de Ingresos
-            </h3>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="p-4 bg-green-500 text-white rounded-2xl text-center shadow-md">
+              <p id="labelPrincipal" class="text-[9px] uppercase font-bold opacity-90">
+                Precio Sugerido
+              </p>
+              <p id="resPrincipal" class="text-2xl font-black">$0.00</p>
+            </div>
+            <div class="p-4 bg-blue-600 text-white rounded-2xl text-center shadow-md">
+              <p id="labelSecundario" class="text-[9px] uppercase font-bold opacity-90">
+                Sugerido Mayor
+              </p>
+              <p id="resSecundario" class="text-2xl font-black">$0.00</p>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <h4 class="font-black text-blue-600 uppercase text-[9px] mb-2 tracking-widest">
+              Detalle de Inversión
+            </h4>
+            <div id="contenedorTablaPdf">
+              <div class="tabla-borde border dark:border-gray-700 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm">
+                  <thead class="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th class="p-2 font-black text-gray-400 uppercase text-[9px]">#</th>
+                      <th class="p-2 font-black text-gray-400 uppercase text-[9px]">Descripción</th>
+                      <th class="p-2 text-center font-black text-gray-400 uppercase text-[9px]">
+                        Cant.
+                      </th>
+                      <th class="p-2 text-center font-black text-gray-400 uppercase text-[9px]">
+                        Precio
+                      </th>
+                      <th class="p-2 text-right font-black text-gray-400 uppercase text-[9px]">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="pdfListaItems"></tbody>
+                  <tfoot id="pdfPieTabla" class="bg-blue-50 dark:bg-blue-900/20 font-black">
+                    <tr>
+                      <td colspan="4" class="p-2 text-right text-blue-600 uppercase text-[10px]">
+                        Total Inversión:
+                      </td>
+                      <td
+                        id="pdfTotalInversion"
+                        class="p-2 text-right text-blue-700 dark:text-blue-400 text-[10px]"
+                      ></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="contenedorResumenFinal" class="hidden grid grid-cols-2 gap-4 mb-8">
             <div
-              class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-b border-gray-700 pb-8 mb-6"
+              class="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border dark:border-gray-700 text-center"
             >
+              <p class="text-[10px] uppercase font-bold text-gray-400">Unidades Totales</p>
+              <p id="pdfCantFinal" class="text-xl font-black"></p>
+            </div>
+            <div
+              class="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border dark:border-gray-700 text-center"
+            >
+              <p class="text-[10px] uppercase font-bold text-gray-400">Costo de Inversión</p>
+              <p id="pdfPrecioTotalFinal" class="text-xl font-black text-green-600"></p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border dark:border-gray-700">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <p id="labelCol1" class="text-gray-400 text-[10px] uppercase font-bold">---</p>
+                <p id="labelCol1" class="text-gray-400 text-[10px] uppercase font-bold"></p>
                 <p id="resCol1" class="text-lg font-bold"></p>
               </div>
               <div>
-                <p id="labelCol2" class="text-gray-400 text-[10px] uppercase font-bold">---</p>
+                <p id="labelCol2" class="text-gray-400 text-[10px] uppercase font-bold"></p>
                 <p id="resCol2" class="text-lg font-bold"></p>
               </div>
               <div>
-                <p id="labelCol3" class="text-gray-400 text-[10px] uppercase font-bold">---</p>
+                <p id="labelCol3" class="text-gray-400 text-[10px] uppercase font-bold"></p>
                 <p id="resCol3" class="text-lg font-bold"></p>
               </div>
               <div>
-                <p id="labelCol4" class="text-gray-400 text-[10px] uppercase font-bold">---</p>
-                <p id="resCol4" class="text-lg font-bold text-yellow-500"></p>
+                <p id="labelCol4" class="text-gray-400 text-[10px] uppercase font-bold"></p>
+                <p id="resCol4" class="text-lg font-bold text-blue-600"></p>
               </div>
             </div>
-            <div id="alertaInflacion" class="text-sm italic text-gray-400 text-center"></div>
+          </div>
+
+          <div id="alertaInflacion" class="mt-4 text-center"></div>
+
+          <div
+            id="pdfSugerenciaContenedor"
+            class="hidden mt-4 p-3 border-l-4 border-blue-500 bg-blue-50/50 rounded-r-xl no-web-view"
+          >
+            <p class="text-[9px] font-black text-blue-800 uppercase tracking-widest mb-1">
+              Nota de Rentabilidad:
+            </p>
+            <p id="pdfSugerenciaTexto" class="text-[10px] text-gray-700 leading-tight italic"></p>
           </div>
         </div>
+
         <button
           onclick="window.print()"
-          class="w-full py-4 bg-gray-800 text-white rounded-2xl font-black no-print"
+          class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black no-print transition-all shadow-lg active:scale-95"
         >
           🖨️ GENERAR PDF PROFESIONAL
         </button>
+
         <div class="no-print bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-center mt-6">
           <p class="text-xs text-yellow-800 font-medium">
-            🌟 <strong>Apoya este proyecto:</strong> Si esta calculadora te ayudó a cobrar mejor,
-            considera una donación para seguir mejorándola.
+            🌟 <strong>Apoya este proyecto:</strong> Si esta calculadora te ayudó...
           </p>
           <div class="mt-2 text-[10px] font-black text-yellow-600 space-y-1">
-            <p class="break-all">USDT (Binance Pay/Network): TQ4v1n1WU8iHRnCAMEkTsRea8DK9j949mm</p>
+            <p class="break-all">USDT: TQ4v1n1WU8iHRnCAMEkTsRea8DK9j949mm</p>
             <p>PayPal: lm3771843@gmail.com</p>
           </div>
         </div>
