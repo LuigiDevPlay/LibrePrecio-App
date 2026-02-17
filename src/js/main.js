@@ -131,6 +131,7 @@ function agregarFilaAdicional() {
 }
 
 function ejecutarCalculosFinancieros() {
+  // --- VARIABLES DE CONTROL INICIAL ---
   let costoBaseInsumos = 0;
   let inversionTotalBruta = 0;
   let precioFinalCalculado = 0;
@@ -138,12 +139,14 @@ function ejecutarCalculosFinancieros() {
   // 1. CAPTURA DE VALORES COMUNES
   const gananciaPct = parseFloat(document.getElementById("ganancia").value || 30) / 100;
   const inflacionPct = parseFloat(document.getElementById("inflacion").value || 5) / 100;
-  const transporte = parseFloat(document.getElementById("transporteGlobal").value || 0);
+
+  // Gastos Fijos
   const luz = parseFloat(document.getElementById("luz").value || 0);
   const agua = parseFloat(document.getElementById("agua").value || 0);
   const internet = parseFloat(document.getElementById("internet").value || 0);
   const telefono = parseFloat(document.getElementById("telefono").value || 0);
 
+  // Gastos Adicionales (Check)
   let totalAdicionales = 0;
   const checkAdi = document.getElementById("checkAdicionales");
   if (checkAdi && checkAdi.checked) {
@@ -152,35 +155,33 @@ function ejecutarCalculosFinancieros() {
     });
   }
 
+  // Referencias UI
   const res = ["resCol1", "resCol2", "resCol3", "resCol4"].map((id) => document.getElementById(id));
   const labels = ["labelCol1", "labelCol2", "labelCol3", "labelCol4"].map((id) =>
     document.getElementById(id),
   );
   const cuerpoTablaPdf = document.getElementById("pdfListaItems");
+
+  // Limpiamos la tabla del PDF antes de empezar
   cuerpoTablaPdf.innerHTML = "";
 
   // --- MODO PRODUCTO ---
   if (modoActual === "producto") {
-    // 1. REINICIAR el contador (Vital para que sume bien al cambiar datos)
-    let costoBaseInsumos = 0;
     const filasInsumos = document.querySelectorAll("#listaInsumos > div");
-
-    // Limpiamos la tabla del PDF antes de llenarla
-    cuerpoTablaPdf.innerHTML = "";
+    costoBaseInsumos = 0; // Reiniciar para evitar sumas duplicadas
 
     filasInsumos.forEach((fila, index) => {
       const nombre = fila.querySelector('input[type="text"]').value || "Insumo";
       const cant = parseFloat(fila.querySelector(".item-cant").value || 0);
       const subtotal = parseFloat(fila.querySelector(".item-subtotal").value || 0);
 
-      // 2. CALCULAR PRECIO UNITARIO (Para que no diga "-")
+      // CALCULAR PRECIO UNITARIO PARA LA COLUMNA
       const precioUnitario = cant > 0 ? subtotal / cant : 0;
-
       costoBaseInsumos += subtotal;
 
       cuerpoTablaPdf.innerHTML += `
         <tr class="border-b border-gray-100 dark:border-gray-800">
-          <td class="p-2 text-blue-600 font-black text-[9px] ">${index + 1}</td>
+          <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">${index + 1}</td>
           <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">${nombre}</td>
           <td class="p-2 text-center text-[10px] text-gray-500">${cant}</td>
           <td class="p-2 text-center text-[10px] text-gray-500">$${precioUnitario.toFixed(2)}</td>
@@ -188,7 +189,6 @@ function ejecutarCalculosFinancieros() {
         </tr>`;
     });
 
-    // --- AGREGAR GASTOS OPERATIVOS A LA TABLA ---
     const gastosFijosTotales = luz + agua + internet + telefono + totalAdicionales;
     if (gastosFijosTotales > 0) {
       cuerpoTablaPdf.innerHTML += `
@@ -201,7 +201,6 @@ function ejecutarCalculosFinancieros() {
         </tr>`;
     }
 
-    // Agregar Transporte (Usando el ID correcto de tu HTML para modo producto)
     const transporteGlobal = parseFloat(document.getElementById("transporteGlobal").value || 0);
     if (transporteGlobal > 0) {
       cuerpoTablaPdf.innerHTML += `
@@ -215,29 +214,25 @@ function ejecutarCalculosFinancieros() {
     }
 
     const unidades = parseFloat(document.getElementById("unidadesProduccion").value || 1);
-
-    // 3. INVERSIÓN TOTAL CORRECTA
     inversionTotalBruta = costoBaseInsumos + gastosFijosTotales + transporteGlobal;
 
-    // Actualizar el "Total Inversión" en el pie del PDF
-    document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
-
-    // Cálculos de precio final
     const costoUniConInflacion = (inversionTotalBruta / unidades) * (1 + inflacionPct);
     precioFinalCalculado = costoUniConInflacion * (1 + gananciaPct);
 
-    // Actualizar Proyecciones en pantalla
+    // Proyecciones Pantalla
     const ingresoSemanal = precioFinalCalculado * unidades;
     res[0].innerText = `$ ${(ingresoSemanal / 6).toFixed(2)}`;
     res[1].innerText = `$ ${ingresoSemanal.toFixed(2)}`;
     res[2].innerText = `$ ${(ingresoSemanal * 4).toFixed(2)}`;
     res[3].innerText = `$ ${(ingresoSemanal * 48).toFixed(2)}`;
 
-    // UI Updates
-    document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+    labels[0].innerText = "POR DÍA";
+    labels[1].innerText = "POR SEMANA";
+    labels[2].innerText = "POR MES";
+    labels[3].innerText = "POR AÑO";
+
     document.getElementById("pdfCantFinal").innerText = `${unidades} Unds.`;
-    document.getElementById("pdfPrecioTotalFinal").innerText =
-      `$ ${inversionTotalBruta.toFixed(2)}`;
+    document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Producto";
   }
   // --- MODO SERVICIO ---
   else {
@@ -247,18 +242,13 @@ function ejecutarCalculosFinancieros() {
     const modalidad = document.getElementById("modalidadServicio").value;
     const gastoTraslado = parseFloat(document.getElementById("gastoTransporte").value || 0);
 
-    // 1. CÁLCULO DE LA INVERSIÓN TOTAL DEL SERVICIO (Lo que te cuesta a ti hacerlo)
-    // Inversión = (Valor de tu tiempo) + (Gastos operativos del mes / proyectos) + Traslado
     const inversionEnTiempo = precioHora * horasProyecto;
     const gastosOperativosProrrateados = luz + agua + internet + telefono + totalAdicionales;
-
     inversionTotalBruta = inversionEnTiempo + gastosOperativosProrrateados + gastoTraslado;
 
-    // 2. CÁLCULO DEL PRECIO FINAL (Inversión + Inflación + Ganancia)
     const costoConInflacion = inversionTotalBruta * (1 + inflacionPct);
     precioFinalCalculado = costoConInflacion * (1 + gananciaPct);
 
-    // 3. LLENAR TABLA DEL PDF
     cuerpoTablaPdf.innerHTML = `
       <tr class="border-b border-gray-100 dark:border-gray-800">
         <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">1</td>
@@ -269,7 +259,7 @@ function ejecutarCalculosFinancieros() {
       </tr>
       <tr class="border-b border-gray-100 dark:border-gray-800">
         <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">2</td>
-        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos Operativos y fijos (Prorrateados)</td>
+        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos Operativos</td>
         <td class="p-2 text-center text-[10px] text-gray-500">1</td>
         <td class="p-2 text-center text-[10px] text-gray-500">$${gastosOperativosProrrateados.toFixed(2)}</td>
         <td class="p-2 text-right font-black text-[10px] text-blue-900">$${gastosOperativosProrrateados.toFixed(2)}</td>
@@ -279,7 +269,7 @@ function ejecutarCalculosFinancieros() {
           ? `
       <tr class="border-b border-gray-100 dark:border-gray-800">
         <td class="p-2 text-blue-600 font-black text-[9px] bg-blue-50/50">3</td>
-        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Gastos de Traslado / Movilidad</td>
+        <td class="p-2 font-bold text-[10px] text-gray-700 dark:text-gray-200">Transporte</td>
         <td class="p-2 text-center text-[10px] text-gray-500">1</td>
         <td class="p-2 text-center text-[10px] text-gray-500">$${gastoTraslado.toFixed(2)}</td>
         <td class="p-2 text-right font-black text-[10px] text-blue-900">$${gastoTraslado.toFixed(2)}</td>
@@ -288,40 +278,38 @@ function ejecutarCalculosFinancieros() {
       }
     `;
 
-    // 4. ACTUALIZAR EL TOTAL DE INVERSIÓN EN EL PIE DE LA TABLA DEL PDF
-    document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
-
-    // 5. PROYECCIONES EN PANTALLA
     const ingresoMensual = precioFinalCalculado * proyectosMes;
     res[0].innerText = `$ ${(ingresoMensual / 22).toFixed(2)}`;
     res[1].innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
     res[2].innerText = `$ ${ingresoMensual.toFixed(2)}`;
     res[3].innerText = `$ ${(ingresoMensual * 12).toFixed(2)}`;
 
-    // Etiquetas y UI
     labels[0].innerText = "POR DÍA";
     labels[1].innerText = "POR PROYECTO";
     labels[2].innerText = "POR MES";
     labels[3].innerText = "POR AÑO";
 
-    document.getElementById("labelPrincipal").innerText = "Presupuesto Sugerido";
-    document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
-    document.getElementById("resSecundario").innerText =
-      `$ ${(precioFinalCalculado / (horasProyecto || 1)).toFixed(2)} / hr`;
     document.getElementById("subtituloInforme").innerText = "Informe de Rentabilidad: Servicio";
-    document.getElementById("contenedorResumenFinal").classList.add("hidden");
   }
 
-  // --- RESULTADOS COMUNES (Fuera de los IF) ---
-  document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
-  document.getElementById("resSecundario").innerText =
-    `$ ${(precioFinalCalculado * 0.85).toFixed(2)}`;
-  document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
-  document.getElementById("pdfFecha").innerText = "Emisión: " + new Date().toLocaleDateString();
-  document.getElementById("pdfNombreNegocio").innerText =
-    document.getElementById("inputNegocio").value || "MI NEGOCIO";
+  // --- RESULTADOS COMUNES (ACTUALIZACIÓN DE MARCA Y PDF) ---
+  const nombreNegocioVal = document.getElementById("inputNegocio").value || "MI NEGOCIO";
+  const inicialesLogoVal = document.getElementById("inputLogo").value || "$";
 
-  // --- LÓGICA DE ALERTA (WEB) Y NOTA (PDF) ---
+  // Actualizar Texto de Marca en el PDF
+  document.getElementById("pdfNombreNegocio").innerText = nombreNegocioVal.toUpperCase();
+  const logoPdfElement = document.getElementById("pdfLogoTexto");
+  if (logoPdfElement) {
+    logoPdfElement.innerText = inicialesLogoVal.toUpperCase();
+  }
+
+  // Totales Finales
+  document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+  document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
+  document.getElementById("pdfPrecioTotalFinal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
+  document.getElementById("pdfFecha").innerText = "Emisión: " + new Date().toLocaleDateString();
+
+  // --- LÓGICA DE ALERTA DE INFLACIÓN ---
   const alertaDiv = document.getElementById("alertaInflacion");
   const pdfSugerenciaCont = document.getElementById("pdfSugerenciaContenedor");
   const pdfSugerenciaTexto = document.getElementById("pdfSugerenciaTexto");
@@ -346,11 +334,9 @@ function ejecutarCalculosFinancieros() {
     claseColor = "bg-red-50 text-red-700 border-red-100 animate-pulse";
   }
 
-  // Mostrar alerta en la Web
   alertaDiv.className = "mt-4 text-center px-4 no-print";
   alertaDiv.innerHTML = `<div class="p-3 rounded-xl text-xs font-bold border ${claseColor}">${mensajeWeb}</div>`;
 
-  // Manejar Nota en PDF (solo aparece si inflación > 5%)
   if (valorInflacion >= 5 && pdfSugerenciaCont) {
     pdfSugerenciaCont.classList.remove("hidden");
     pdfSugerenciaTexto.innerText = textoPDF;
@@ -358,6 +344,7 @@ function ejecutarCalculosFinancieros() {
     pdfSugerenciaCont.classList.add("hidden");
   }
 
+  // Mostrar contenedor de resultados
   document.getElementById("resultado").classList.remove("hidden");
   document.getElementById("resultado").scrollIntoView({ behavior: "smooth" });
 }
