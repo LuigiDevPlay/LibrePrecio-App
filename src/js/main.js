@@ -165,6 +165,10 @@ function ejecutarCalculosFinancieros() {
   // Limpiamos la tabla del PDF antes de empezar
   cuerpoTablaPdf.innerHTML = "";
 
+  // --- RESULTADOS COMUNES (Lógica para la caja azul resSecundario) ---
+  const resSecundario = document.getElementById("resSecundario");
+  const labelSecundario = document.getElementById("labelSecundario");
+
   // --- MODO PRODUCTO ---
   if (modoActual === "producto") {
     const filasInsumos = document.querySelectorAll("#listaInsumos > div");
@@ -219,6 +223,10 @@ function ejecutarCalculosFinancieros() {
     const costoUniConInflacion = (inversionTotalBruta / unidades) * (1 + inflacionPct);
     precioFinalCalculado = costoUniConInflacion * (1 + gananciaPct);
 
+    const precioAlMayor = precioFinalCalculado * 0.85;
+    labelSecundario.innerText = "Sugerido Mayor (-15%)";
+    resSecundario.innerText = `$ ${precioAlMayor.toFixed(2)}`;
+
     // Proyecciones Pantalla
     const ingresoSemanal = precioFinalCalculado * unidades;
     res[0].innerText = `$ ${(ingresoSemanal / 6).toFixed(2)}`;
@@ -248,6 +256,12 @@ function ejecutarCalculosFinancieros() {
 
     const costoConInflacion = inversionTotalBruta * (1 + inflacionPct);
     precioFinalCalculado = costoConInflacion * (1 + gananciaPct);
+
+    const horas = parseFloat(document.getElementById("horasProyecto").value || 1);
+    const precioHoraSugerido = precioFinalCalculado / horas;
+
+    labelSecundario.innerText = "Sugerido por Hora";
+    resSecundario.innerText = `$ ${precioHoraSugerido.toFixed(2)}`;
 
     cuerpoTablaPdf.innerHTML = `
       <tr class="border-b border-gray-100 dark:border-gray-800">
