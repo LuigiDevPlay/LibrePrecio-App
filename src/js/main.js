@@ -172,7 +172,16 @@ function ejecutarCalculosFinancieros() {
   // --- MODO PRODUCTO ---
   if (modoActual === "producto") {
     const filasInsumos = document.querySelectorAll("#listaInsumos > div");
-    costoBaseInsumos = 0; // Reiniciar para evitar sumas duplicadas
+    const contenedorTabla = document.getElementById("contenedorTablaPdf"); // Referencia al contenedor
+
+    // LOGICA DE DETECCIÓN: Si hay más de 10 insumos, activamos las 2 columnas
+    if (filasInsumos.length > 10) {
+      contenedorTabla.classList.add("split");
+    } else {
+      contenedorTabla.classList.remove("split");
+    }
+
+    costoBaseInsumos = 0;
 
     filasInsumos.forEach((fila, index) => {
       const nombre = fila.querySelector('input[type="text"]').value || "Insumo";
@@ -219,6 +228,14 @@ function ejecutarCalculosFinancieros() {
 
     const unidades = parseFloat(document.getElementById("unidadesProduccion").value || 1);
     inversionTotalBruta = costoBaseInsumos + gastosFijosTotales + transporteGlobal;
+
+    // AÑADE ESTO: Insertar el total como una fila más al final del cuerpo
+    cuerpoTablaPdf.innerHTML += `
+      <tr class="bg-blue-50 dark:bg-blue-900/20 font-black border-t-2 border-blue-600">
+        <td colspan="4" class="p-2 text-right text-blue-600 uppercase text-[10px]">Total Inversión:</td>
+        <td class="p-2 text-right text-blue-700 dark:text-blue-400 text-[10px]">$${inversionTotalBruta.toFixed(2)}</td>
+      </tr>
+    `;
 
     const costoUniConInflacion = (inversionTotalBruta / unidades) * (1 + inflacionPct);
     precioFinalCalculado = costoUniConInflacion * (1 + gananciaPct);
@@ -319,7 +336,6 @@ function ejecutarCalculosFinancieros() {
 
   // Totales Finales
   document.getElementById("resPrincipal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
-  document.getElementById("pdfTotalInversion").innerText = `$ ${inversionTotalBruta.toFixed(2)}`;
   document.getElementById("pdfPrecioTotalFinal").innerText = `$ ${precioFinalCalculado.toFixed(2)}`;
   document.getElementById("pdfFecha").innerText = "Emisión: " + new Date().toLocaleDateString();
 

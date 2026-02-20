@@ -47,6 +47,11 @@
         text-underline-offset: 2px;
       }
 
+      #contenedorTablaPdf.split table {
+        display: table !important;
+        width: 100% !important;
+      }
+
       /* --- ESTILOS EXCLUSIVOS PARA IMPRESIÓN (PDF) --- */
       @media print {
         .no-print {
@@ -109,8 +114,18 @@
           background-color: #f8fafc !important;
         }
 
+        /* Asegura que la fila del total no se rompa */
+        #pdfListaItems tr.font-black {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          background-color: #eff6ff !important; /* Azul muy claro para el PDF */
+          -webkit-print-color-adjust: exact;
+        }
+
+        /* Si decides mantener el tfoot en lugar de la fila, usa esto: */
         .split tfoot {
-          display: none !important;
+          display: table-footer-group !important;
+          column-span: all; /* Esto hace que el total ignore las 2 columnas y ocupe todo el ancho inferior */
         }
 
         .logo_pdf {
@@ -537,11 +552,8 @@
                     </tr>
                   </thead>
                   <tbody id="pdfListaItems"></tbody>
-                  <tfoot id="pdfPieTabla" class="bg-blue-50 dark:bg-blue-900/20 font-black">
+                  <tfoot id="pdfPieTabla" class="bg-blue-50 dark:bg-blue-900/20 font-black hidden">
                     <tr>
-                      <td colspan="4" class="p-2 text-right text-blue-600 uppercase text-[10px]">
-                        Total Inversión:
-                      </td>
                       <td
                         id="pdfTotalInversion"
                         class="p-2 text-right text-blue-700 dark:text-blue-400 text-[10px]"
